@@ -1,5 +1,5 @@
 require_relative "sybase"
-#require_relative "mssql"
+require_relative "mssql"
 require_relative "discovery"
 require "date"
 require "yaml"
@@ -18,12 +18,13 @@ module Alerts
   end
 
   #default and override options file
-  @opts = YAML.load_file("./options.yml")[:alerts]
+  #@opts = YAML.load_file("./settings.yml")[:alerts]
 
-  def self.opts=(path)
-    @opts = YAML.load_file(path)[:alerts]
+  # kinda like mattr_accessor
+  def self.opts=(setpath)
+    @opts = YAML.load_file(setpath)[:alerts]
+    MSSQL.opts(setpath)
   end
-
   def self.opts
     @opts
   end

@@ -5,13 +5,19 @@ require "yaml"
 
 class MSSQL
 
-  opts = YAML.load_file("./settings.yml")[:sql_server]
+  #opts = YAML.load_file("./settings.yml")[:sql_server]
 
-  @db = Sequel.connect(
-    adapter: "tinytds",
-    host: opts[:host],
-    database: opts[:database]
-  )
+  def self.opts(setpath)
+    opts = YAML.load_file(setpath)[:sql_server]
+
+    @db = Sequel.connect(
+      adapter: "tinytds",
+      host: opts[:host],
+      database: opts[:database]
+    )
+
+  end
+
 
   at_exit { @db.disconnect if @db }
 
@@ -22,7 +28,15 @@ class MSSQL
 
   def self.drop_table(table_name)
     ap "dropping table: #{table_name}..."
-    @db.drop_table table_name.to_sym
+
+    xdb = Sequel.connect(
+      adapter: "tinytds",
+      host: "OKC1SQL1008",
+      database: "Geoscience"
+    )
+    xdb.drop_table table_name.to_sym
+    #@db.drop_table table_name.to_sym
+    xdb.disconnect
   end
 
   def self.empty_table(table_name)
