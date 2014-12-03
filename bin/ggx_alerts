@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+require_relative "../lib/ggx_monitor/alerts"
+
+begin
+
+  if ARGV[0] =~ /^\-s/i
+    puts "-------->#{ARGV[1]}"
+    puts "ARGV[0] = #{ARGV[0]}"
+    puts "ARGV[1] = #{ARGV[1]}"
+    puts "ARGV[2] = #{ARGV[2]}"
+    if File.exists?(ARGV[1])
+      puts "exists: #{ARGV[1]}"
+    else
+      puts "did not exist: #{ARGV[1]}"
+    end
+  end
+
+  case ARGV[0]
+  when /^create_table/i
+    Alerts.create_table
+  when /^drop_table/i
+    Alerts.drop_table
+  when /^empty_table/i
+    Alerts.empty_table
+  when /^help/i
+    help = "\nusage: ggx_newlogs \
+    [ drop_table | create_table | empty_table ]\n\n" +
+    "This utility collects digital logs from a specified number of days ago\n" +
+    "from GeoGraphix projects listed in options.yml and writes them to\n"+
+    "SQL Server where they can viewed via SharePoint reports.\n\n"+
+    "drop_table:\tdrops the GGX_NEWLOGS table stored on SQL Server\n" +
+    "create_table:\tcreates the GGX_NEWLOGS table\n\n" +
+    "(YOUR ACCOUNT WILL NEED PERMISSIONS TO MSSQL AND GGX ADMIN SHARES)"
+    puts help
+  else
+    puts "NO ARGS"
+    #Alerts.process_projects
+  end
+
+rescue => e
+  raise e if $DEBUG
+  STDERR.puts e.message
+  STDERR.puts e.backtrace.join("\n")
+  exit 1
+end

@@ -1,0 +1,32 @@
+---
+:sql_server:
+  :host: OKC1SQL1008
+  :database: Geoscience
+
+:newlogs:
+  :projects:
+  - \\OKC1GGX0005\e$\MidCon\Kansas
+  - \\OKC1GGX0006\e$\Oklahoma\NW Oklahoma
+  :days_ago: 7
+
+:alerts:
+  :deep_scan: false
+  :project_homes:
+  - \\OKC1GGX0001\e$\East Texas
+  :zzz_project_homes:
+  - c:\programdata\geographix\projects
+  - \\OKC1GGX0001\e$\Arkansas
+  - \\OKC1GGX0001\e$\Delaware Basin
+  - \\OKC1GGX0001\e$\East Texas
+  - \\OKC1GGX0001\e$\GeoEdges
+  - \\OKC1GGX0001\e$\New Ventures
+  - \\OKC1GGX0001\e$\Rockies
+  - \\OKC1GGX0002\e$\Nebraska
+  - \\OKC1GGX0002\e$\Northeastern_US
+  - \\OKC1GGX0002\e$\Oklahoma
+  - \\OKC1GGX0003\e$\Permian Basin
+  - \\OKC1GGX0004\e$\Delaware Basin
+  - \\OKC1GGX0005\e$\MidCon
+  - \\OKC1GGX0006\e$\Oklahoma
+
+
