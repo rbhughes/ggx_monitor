@@ -15,6 +15,8 @@ class MSSQL
       host: opts[:host],
       database: opts[:database]
     )
+    puts @db.inspect
+
 
   end
 
@@ -28,15 +30,17 @@ class MSSQL
 
   def self.drop_table(table_name)
     ap "dropping table: #{table_name}..."
+    ap "nope, doing a read test....."
+    ap @db[table_name.to_sym].all
 
-    xdb = Sequel.connect(
-      adapter: "tinytds",
-      host: "OKC1SQL1008",
-      database: "Geoscience"
-    )
-    xdb.drop_table table_name.to_sym
+    #xdb = Sequel.connect(
+    #  adapter: "tinytds",
+    #  host: "OKC1SQL1008",
+    #  database: "Geoscience"
+    #)
+    #xdb.drop_table table_name.to_sym
     #@db.drop_table table_name.to_sym
-    xdb.disconnect
+    #xdb.disconnect
   end
 
   def self.empty_table(table_name)

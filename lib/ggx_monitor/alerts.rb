@@ -1,4 +1,4 @@
-require_relative "sybase"
+#require_relative "sybase"
 require_relative "mssql"
 require_relative "discovery"
 require "date"
