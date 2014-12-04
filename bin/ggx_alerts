@@ -4,11 +4,6 @@ require_relative "../lib/ggx_monitor/alerts"
 
 begin
 
-#  banner = "\n\nThis utility checks GeoGraphix projects for a variety of\n" +
-#    "problems, including: bloated gxdb.log, leftover temp tables, and invalid\n" +
-#    "surface and bottom hole lat/lons and stores the results in the\n" +
-#    "GGX_ALERTS table.\n\nUsage: ggx_alerts [options]\n"
-
   banner = "\n\nThis utility checks GeoGraphix projects for a variety of "\
     "problems,\nincluding: bloated gxdb.log files, leftover temp tables, and "\
     "invalid\nsurface and bottom hole lat/lons and store the results in the\n"\
@@ -18,12 +13,12 @@ begin
   OptionParser.new do |opts|
     opts.banner = banner
 
-    opts.on("-s", "--settings [FILE]", "Specify a settings file") do |s|
-      options[:settings] = s
+    opts.on("-o", "--opts_path [PATH]", "Specify path to options file") do |o|
+      options[:opts_path] = o
     end
 
-    opts.on("-d", "--database [ACTION]", [:drop, :create, :empty],
-            "GGX_ALERTS table actions (drop, create, empty)") do |d|
+    opts.on("-d", "--database [ACTION]", [:drop, :create, :empty, :read],
+            "GGX_ALERTS (drop, create, empty, read)") do |d|
       options[:database] = d
       #allows the short "-d" to validate too...
       if options[:database] == nil
@@ -38,16 +33,14 @@ begin
 
   end.parse!
 
-
-  
-
-  # define options either locally or from file
-  setpath = options[:settings] ? options[:settings] : "./settings.yml"
-  if File.exists?(setpath)
-    Alerts.opts = setpath
+  # define options either locally or from specified file
+  opts_path = options[:opts_path] ? options[:opts_path] : "./options.yml"
+  if File.exists?(opts_path)
+    Alerts.set_opts = opts_path
   else
-    raise ArgumentError.new("invalid settings file: #{setpath}") 
+    raise ArgumentError.new("invalid options file path: #{opts_path}") 
   end
+
 
   if options[:database]
     case options[:database]
@@ -57,44 +50,14 @@ begin
       Alerts.create_table
     when :empty
       Alerts.empty_table
+    when :read
+      Alerts.read_table
     end
+    exit
   end
 
+  Alerts.process_projects
 
-
-  #p ARGV
-  
-=begin
-  case ARGV[0]
-
-  when /^\-o/i
-    if ARGV[1] && File.exists?(ARGV[1])
-      Alerts.opts = ARGV[1]
-    else
-      raise ArgumentError.new("'-o' options file missing: #{ARGV[1]}")
-    end
-
-  when /^create_table/i
-    Alerts.create_table
-  when /^drop_table/i
-    Alerts.drop_table
-  when /^empty_table/i
-    Alerts.empty_table
-  when /^help/i
-    help = "\nusage: ggx_newlogs \
-    [ drop_table | create_table | empty_table ]\n\n" +
-    "This utility collects digital logs from a specified number of days ago\n" +
-    "from GeoGraphix projects listed in options.yml and writes them to\n"+
-    "SQL Server where they can viewed via SharePoint reports.\n\n"+
-    "drop_table:\tdrops the GGX_NEWLOGS table stored on SQL Server\n" +
-    "create_table:\tcreates the GGX_NEWLOGS table\n\n" +
-    "(YOUR ACCOUNT WILL NEED PERMISSIONS TO MSSQL AND GGX ADMIN SHARES)"
-    puts help
-  else
-    puts "NO ARGS"
-    #Alerts.process_projects
-  end
-=end
 rescue => e
   raise e if $DEBUG
   STDERR.puts e.message

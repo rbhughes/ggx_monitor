@@ -1,4 +1,4 @@
-#require_relative "sybase"
+require_relative "sybase"
 require_relative "mssql"
 require_relative "discovery"
 require "date"
@@ -17,56 +17,53 @@ module Alerts
     DateTime :row_created_date, :default => Sequel.function(:getdate)
   end
 
-  #default and override options file
-  #@opts = YAML.load_file("./settings.yml")[:alerts]
-
-  # kinda like mattr_accessor
-  def self.opts=(setpath)
-    @opts = YAML.load_file(setpath)[:alerts]
-    MSSQL.opts(setpath)
-  end
-  def self.opts
-    @opts
+  # kinda like mattr_accessor, but define @mssql too
+  def self.set_opts=(opts_path)
+    @opts = YAML.load_file(opts_path)[:alerts]
+    @mssql = MSSQL.new(opts_path)
   end
 
   #----------
-  #
   def self.drop_table
-    MSSQL.drop_table(@table_name)
+    @mssql.drop_table(@table_name)
   end
 
   #----------
-  #
   def self.create_table
-    MSSQL.create_table(@table_name, @table_schema)
+    @mssql.create_table(@table_name, @table_schema)
   end
 
   #----------
-  #
   def self.empty_table
-    MSSQL.empty_table(@table_name)
+    @mssql.empty_table(@table_name)
+  end
+
+  #----------
+  def self.read_table
+    @mssql.read_data(@table_name)
   end
 
 
-  #1. sybase table fragmentation 
-  #alert if segs_per_row > 1.2
-  #http://dcx.sybase.com/1100/en/dbusage_en11/ug-appprofiling-s-5641408.html
+  #----------
+  # sybase table fragmentation 
+  # alert if segs_per_row > 1.2
+  # http://dcx.sybase.com/1100/en/dbusage_en11/ug-appprofiling-s-5641408.html
   def self.check_table_fragmentation(gxdb)
-    #sql = "call sa_table_fragmentation();"
-    sql = "exec sp_tables 'st%';"
-    puts gxdb[sql].all
-    #gxdb[sql].all.select{ |t| t[:segs_per_row] > 1.2 }.map do |x| 
-    #  "Sybase Table Fragmentation: #{x[:tablename]}, (run rebuild)"
-    #end
+    fragged_threshold = 1.2
+    sql = "call sa_table_fragmentation();"
+    gxdb[sql].all.select{ |t| t[:segs_per_row] > fragged_threshold }.map do |x| 
+      "Sybase Table Fragmentation: #{x[:tablename]}, (run rebuild)"
+    end
   end
 
 
-  #2. gxdb.log too big
-  #3. sybase log fragmentation
-  #alert if gxdb.log exceeds an arbitrary number (400MBish)
-  #alert if either gxdb.db or gxdb.log have fragmentation
-  #(the multiplier adjusts to a human-readable scale)
-  #http://dcx.sybase.com/1200/en/dbadmin/sa95c7b274-c1b8-42d4-bc08-4b66bc1c625a.html
+  #----------
+  # gxdb.log too big
+  # sybase log fragmentation
+  # alert if gxdb.log exceeds an arbitrary number (400MBish)
+  # alert if either gxdb.db or gxdb.log have fragmentation
+  # (the multiplier adjusts to a human-readable scale)
+  # http://dcx.sybase.com/1200/en/dbadmin/sa95c7b274-c1b8-42d4-bc08-4b66bc1c625a.html
   def self.check_file_frag_and_log_size(gxdb, proj)
     alerts = []
     db_size = File.size(File.join(proj, "gxdb.db"))
@@ -91,6 +88,9 @@ module Alerts
 
 
 
+  #----------
+  # invalid surface lat/lon
+  # alert if lat/lons are not in normal range or are zero (null is okay)
   def self.check_valid_surface(gxdb)
     sql = "select list(uwi) as invalids from well where uwi in \
       (select top 20 uwi from well where \
@@ -104,6 +104,9 @@ module Alerts
     end
   end
 
+  #----------
+  # invalid bottom hole lat/lon
+  # alert if lat/lons are not in normal range or are zero (null is okay)
   def self.check_valid_bottom(gxdb)
     sql = "select list(uwi) as invalids from well where uwi in \
       (select top 20 uwi from well where \
@@ -132,10 +135,13 @@ module Alerts
 
     gxdb = conn.db
 
-    #puts check_file_frag_and_log_size(gxdb, proj).class
-    puts check_table_fragmentation(gxdb).class
-    #puts check_valid_surface(gxdb).class
-    #puts check_valid_bottom(gxdb).class
+    #alerts.concat check_table_fragmentation(gxdb)
+    alerts.concat check_file_frag_and_log_size(gxdb, proj)
+    alerts.concat check_valid_surface(gxdb)
+    alerts.concat check_valid_bottom(gxdb)
+    
+    h[:alerts_summary] = alerts.join("\n")
+
 
 
 

@@ -5,56 +5,39 @@ require "yaml"
 
 class MSSQL
 
-  #opts = YAML.load_file("./settings.yml")[:sql_server]
-
-  def self.opts(setpath)
-    opts = YAML.load_file(setpath)[:sql_server]
-
+  def initialize(opts_path)
+    opts = YAML.load_file(opts_path)[:sql_server]
     @db = Sequel.connect(
       adapter: "tinytds",
       host: opts[:host],
       database: opts[:database]
     )
-    puts @db.inspect
-
-
   end
-
 
   at_exit { @db.disconnect if @db }
 
-  def self.create_table(table_name, block)
+  def create_table(table_name, block)
     ap "creating table: #{table_name}..."
     @db.create_table table_name.to_sym, &block
   end
 
-  def self.drop_table(table_name)
+  def drop_table(table_name)
     ap "dropping table: #{table_name}..."
-    ap "nope, doing a read test....."
-    ap @db[table_name.to_sym].all
-
-    #xdb = Sequel.connect(
-    #  adapter: "tinytds",
-    #  host: "OKC1SQL1008",
-    #  database: "Geoscience"
-    #)
-    #xdb.drop_table table_name.to_sym
-    #@db.drop_table table_name.to_sym
-    #xdb.disconnect
+    @db.drop_table table_name.to_sym
   end
 
-  def self.empty_table(table_name)
+  def empty_table(table_name)
     ap "delete all rows from: #{table_name}..."
     ap @db[table_name.to_sym].delete
   end
 
-  def self.write_data(table_name, data)
+  def write_data(table_name, data)
     fail "sql data should be an array" unless data.class == Array
     ap "writing #{data.size} rows..."
     @db[table_name.to_sym].multi_insert data
   end
 
-  def self.read_data(table_name)
+  def read_data(table_name)
     ap "listing contents for #{table_name}..."
     ap @db[table_name.to_sym].all
   end
