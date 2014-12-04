@@ -1,6 +1,5 @@
 require "sequel"
 require "socket"
-require "awesome_print"
 
 ENV["PATH"] = "#{ENV["PATH"]};c:/dev/sqla64/bin64"
 
