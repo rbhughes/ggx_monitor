@@ -4,11 +4,12 @@ require_relative "../lib/ggx_monitor/temps"
 
 begin
 
-  banner = "\n\nThis utility checks GeoGraphix projects for temp tables "\
-    "usually leftover\nfrom client crashes that should be deleted. WARNING: "\
-    "These tables are NORMAL\nif users are actively working in the projects; "\
-    "only delete them if you are\nabsolutely certain that the project(s) are "\
-    "not in use.\n\nUsage: ggx_temps [options]\n\n"
+  banner = "\n\nThis utility lists (and optionally deletes) temp tables in "\
+           "GeoGraphix\nprojects that are usually leftover from client crashes"\
+           "and should be deleted.\nWARNING: These tables are NORMAL when "\
+           "users are actively working in the\nprojects; only delete them if "\
+           "you are absolutely certain that the project(s)\nare not in use.\n\n"\
+           "Usage: ggx_temps [options]\n\n"
 
   options = {kill_temps: false}
   OptionParser.new do |opts|

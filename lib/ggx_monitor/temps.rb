@@ -54,8 +54,8 @@ module Temps
     gxdb[sql].all.select{ |t| t[:table_name].match(tmp_tables) }.map do |x|
       print x[:table_name]
       if kill_temps
-        #gxdb["drop table #{x[:table_name]}"]
-        print "...and DELETED #{x[:table_name]}"
+        gxdb.drop_table x[:table_name].to_sym
+        print "...and it's DELETED"
       end
       puts ""
       
