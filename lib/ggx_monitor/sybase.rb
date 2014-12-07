@@ -27,6 +27,7 @@ class Sybase
   def get_ggx_dbn(proj)
     ini = File.join(File.dirname(proj), "home.ini")
     m = File.read(ini).match /Name=(.*)/
+    raise RuntimeError.new("invalid home.ini: #{ini}") if m == nil
     @project_home = m[1]
     @project_name = File.basename(proj)
     "#{@project_name}-#{@project_home}".gsub(" ", "_")

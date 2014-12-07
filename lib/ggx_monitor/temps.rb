@@ -52,20 +52,15 @@ module Temps
     sql = "exec sp_tables '%', 'DBA', '#{qualifier}', \"'TABLE'\""
 
     gxdb[sql].all.select{ |t| t[:table_name].match(tmp_tables) }.map do |x|
+
       print x[:table_name]
       if kill_temps
         gxdb.drop_table x[:table_name].to_sym
         print "...and it's DELETED"
       end
       puts ""
-      
 
     end
-
-    #check_temp_tables(gxdb, qualifier)
-
-    
-
     gxdb.disconnect
   end
 
@@ -75,15 +70,11 @@ module Temps
   def self.process_projects(kill_temps)
     begin
 
-      #all_projects = []
-
       @opts[:project_homes].each do |home|
         Discovery.project_list(home, @opts[:deep_scan]).each do |proj|
           check_temp_tables(proj, kill_temps)
         end
       end
-
-      #alertable_projects = all_projects.reject{ |x| x[:alerts_summary].empty? }
 
     rescue Exception => e
       puts e.message
