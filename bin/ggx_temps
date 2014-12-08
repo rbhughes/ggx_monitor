@@ -12,6 +12,7 @@ begin
            "Usage: ggx_temps [options]\n\n"
 
   options = {kill_temps: false}
+
   OptionParser.new do |opts|
     opts.banner = banner
 

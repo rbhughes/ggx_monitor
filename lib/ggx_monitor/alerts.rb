@@ -47,7 +47,7 @@ module Alerts
 
 
   #----------
-  # sybase table fragmentation 
+  # * sybase table fragmentation 
   # alert if segs_per_row > 1.2
   # http://dcx.sybase.com/1100/en/dbusage_en11/ug-appprofiling-s-5641408.html
   def self.check_table_fragmentation(gxdb)
@@ -60,8 +60,8 @@ module Alerts
   end
 
   #----------
-  # gxdb.log too big
-  # sybase log fragmentation
+  # * gxdb.log too big
+  # * sybase log fragmentation
   # alert if gxdb.log exceeds an arbitrary number (400MBish)
   # alert if either gxdb.db or gxdb.log have fragmentation
   # (the multiplier adjusts to a human-readable scale)
@@ -90,7 +90,7 @@ module Alerts
   end
 
   #----------
-  # invalid surface lat/lon
+  # * invalid surface lat/lon
   # alert if lat/lons are not in normal range or are zero (null is okay)
   def self.check_valid_surface(gxdb)
     print "."
@@ -107,7 +107,7 @@ module Alerts
   end
 
   #----------
-  # invalid bottom hole lat/lon
+  # * invalid bottom hole lat/lon
   # alert if lat/lons are not in normal range or are zero (null is okay)
   def self.check_valid_bottom(gxdb)
     print "."
@@ -138,7 +138,7 @@ module Alerts
 
     gxdb = conn.db
 
-    #alerts.concat check_table_fragmentation(gxdb) #TOO SLOW
+    #alerts.concat check_table_fragmentation(gxdb) #SKIP, IT'S TOO SLOW
     alerts.concat check_file_frag_and_log_size(gxdb, proj)
     alerts.concat check_valid_surface(gxdb)
     alerts.concat check_valid_bottom(gxdb)

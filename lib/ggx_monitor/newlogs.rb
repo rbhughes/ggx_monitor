@@ -52,6 +52,8 @@ module NewLogs
   end
 
   #----------
+  # Query projects for any newly added digital log curves (presumably LAS)
+  # that have been added (modified ~ imported) in the past N days.
   #
   def self.get_recent_logs(proj)
     conn = Sybase.new(proj)
@@ -91,10 +93,11 @@ module NewLogs
 
   #----------
   #
-  def self.process_projects
+  def self.process_projects(days_ago)
     begin
 
       @mssql.empty_table(@table_name)
+      @opts[:days_ago] = days_ago
 
       @opts[:projects].each do |proj|
         logs = get_recent_logs(proj)
@@ -102,7 +105,8 @@ module NewLogs
       end
 
     rescue Exception => e
-      puts e.backtrace
+      raise e
+      #puts e.backtrace
     end
   end
 

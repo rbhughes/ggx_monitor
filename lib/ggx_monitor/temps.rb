@@ -11,7 +11,9 @@ module Temps
   end
 
   #----------
-  #
+  # A GeoGraphix crash can result in orphaned temporary tables. Project rebuilds
+  # do not delete them, so we need to locate and remove them. Leaving them
+  # can result in spurious odd behavior/crashes (mostly CrossSection).
   def self.check_temp_tables(proj, kill_temps)
 
     tmp_tables = Regexp.union [

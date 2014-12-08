@@ -9,8 +9,8 @@ begin
     "stores the results in the MS SQL Server GGX_NEWLOGS table.\n\nUsage: "\
     "ggx_newlogs [options]\n\n"
 
+  options = {days_ago: 7}
 
-  options = {}
   OptionParser.new do |opts|
     opts.banner = banner
 
@@ -61,7 +61,8 @@ begin
     exit
   end
 
-  NewLogs.process_projects
+  # passing days_ago here overrides the options file's days_ago value
+  NewLogs.process_projects(options[:days_ago])
 
 rescue => e
   raise e if $DEBUG
