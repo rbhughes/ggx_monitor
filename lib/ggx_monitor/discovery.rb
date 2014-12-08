@@ -1,4 +1,3 @@
-
 module Discovery
 
 #  def self.project_list(root, deep_scan)

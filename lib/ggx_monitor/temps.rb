@@ -5,30 +5,10 @@ require "yaml"
 
 module Temps
 
-
   # kinda like mattr_accessor, but define @mssql too
   def self.set_opts=(opts_path)
     @opts = YAML.load_file(opts_path)[:temps]
   end
-
-  #----------
-  # temporary tables that should not exist if all users are logged out of GGX
-  # (should be deleted if they persist following a database rebuild)
-  def self.zzzcheck_temp_tables(gxdb, qualifier)
-    sql = "exec sp_tables '%', 'DBA', '#{qualifier}', \"'TABLE'\""
-
-    tmp_tables = Regexp.union [
-      /^R_TEMP_SOURCE.*/i,
-      /^WBFTT.*/i,
-      /^GGX_TMP_CREATE_ZONES.*/i,
-      /^TS_TEMP.*/i
-    ]
-
-    gxdb[sql].all.select{ |t| t[:table_name].match(tmp_tables) }.map do |x|
-      puts x[:table_name]
-    end
-  end
-
 
   #----------
   #

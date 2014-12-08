@@ -13,6 +13,7 @@
   :deep_scan: false
   :project_homes:
   - c:\programdata\geographix\projects
+  - \\OKC1GGX0001\e$\East Texas
   :just_a_list_to_copy_from:
   - c:\programdata\geographix\projects
   - \\OKC1GGX0001\e$\Arkansas
@@ -35,5 +36,6 @@
   - \\mimi\Discovery-90830583-001f-44e9-bfe1-990ba47fea57$
   - c:\programdata\geographix\projects
   :project_homes:
+  - \\OKC1GGX0001\e$\East Texas
   - c:\programdata\geographix\projects
 

@@ -34,8 +34,9 @@ class Sybase
   end
 
   # Pluck the hostname from either the UNC path or local host
-  # Backslashes have already been replaced with forward slashes.
+  # Any remaining backslashes get replaced with forward slashes for consistency
   def get_host(proj)
+    proj = proj.gsub("\\","/")
     @project_server = (proj.match /^\/\//) ? 
       (proj.match /^\/\/(\w+)/)[1] : Socket.gethostname
     #@project_server = (proj.match /^\\\\/) ? 

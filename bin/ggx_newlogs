@@ -1,29 +1,67 @@
 #!/usr/bin/env ruby
+require "optparse"
 require_relative "../lib/ggx_monitor/newlogs"
 
 begin
 
-  case ARGV[0]
+  banner = "\n\nThis utility collects digital logs from a specified number of "\
+    "days ago from GeoGraphix projects\nlisted in the options.yml file and "\
+    "stores the results in the MS SQL Server GGX_NEWLOGS table.\n\nUsage: "\
+    "ggx_newlogs [options]\n\n"
 
-  when /^create_table/i
-    NewLogs.create_table
-  when /^drop_table/i
-    NewLogs.drop_table
-  when /^empty_table/i
-    NewLogs.empty_table
-  when /^help/i
-    help = "\nusage: ggx_newlogs \
-    [ drop_table | create_table | empty_table ]\n\n" +
-    "This utility collects digital logs from a specified number of days ago\n" +
-    "from GeoGraphix projects listed in settings.yml and writes them to\n"+
-    "SQL Server where they can viewed via SharePoint reports.\n\n"+
-    "drop_table:\tdrops the GGX_NEWLOGS table stored on SQL Server\n" +
-    "create_table:\tcreates the GGX_NEWLOGS table\n\n" +
-    "(YOUR ACCOUNT WILL NEED PERMISSIONS TO MSSQL AND GGX ADMIN SHARES)"
-    puts help
+
+  options = {}
+  OptionParser.new do |opts|
+    opts.banner = banner
+
+    opts.on("-o", "--opts_path [PATH]", "Specify path to options file") do |o|
+      options[:opts_path] = o
+    end
+
+    opts.on("-a", "--days_ago [INT]", "Number of days ago to query") do |a|
+      options[:days_ago] = a
+    end
+
+    opts.on("-d", "--database [ACTION]", [:drop, :create, :empty, :read],
+            "GGX_NEWLOGS (drop, create, empty, read)") do |d|
+      options[:database] = d
+      #allows the short "-d" to validate too...
+      if options[:database] == nil
+        raise ArgumentError.new("invalid argument: -d #{ARGV[0]}") 
+      end
+    end
+
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+
+  end.parse!
+
+  # define options either locally or from specified file
+  opts_path = options[:opts_path] ? options[:opts_path] : "./options.yml"
+  if File.exists?(opts_path)
+    NewLogs.set_opts = opts_path
   else
-    NewLogs.process_projects
+    raise ArgumentError.new("invalid options file path: #{opts_path}") 
   end
+
+
+  if options[:database]
+    case options[:database]
+    when :drop
+      NewLogs.drop_table
+    when :create
+      NewLogs.create_table
+    when :empty
+      NewLogs.empty_table
+    when :read
+      NewLogs.read_table
+    end
+    exit
+  end
+
+  NewLogs.process_projects
 
 rescue => e
   raise e if $DEBUG

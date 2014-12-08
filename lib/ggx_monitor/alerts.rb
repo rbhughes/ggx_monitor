@@ -1,6 +1,6 @@
-require_relative "sybase"
-require_relative "mssql"
 require_relative "discovery"
+require_relative "mssql"
+require_relative "sybase"
 require "date"
 require "yaml"
 
@@ -59,7 +59,6 @@ module Alerts
     end
   end
 
-
   #----------
   # gxdb.log too big
   # sybase log fragmentation
@@ -89,8 +88,6 @@ module Alerts
     end
     alerts
   end
-
-
 
   #----------
   # invalid surface lat/lon
@@ -125,7 +122,6 @@ module Alerts
       "Invalid Bottom Hole Lat/Lon: #{x[:invalids]}. ('0' or not lat/lon range)"
     end
   end
-
 
   #----------
   #

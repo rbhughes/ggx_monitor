@@ -1,5 +1,6 @@
-require_relative "sybase"
+require_relative "discovery"
 require_relative "mssql"
+require_relative "sybase"
 require "date"
 require "yaml"
 
@@ -22,7 +23,33 @@ module NewLogs
     DateTime :row_created_date, :default => Sequel.function(:getdate)
   end
 
-  @opts = YAML.load_file("./settings.yml")[:newlogs]
+  # kinda like mattr_accessor, but define @mssql too
+  def self.set_opts=(opts_path)
+    @opts = YAML.load_file(opts_path)[:newlogs]
+    @mssql = MSSQL.new(opts_path)
+  end
+
+  #----------
+  #
+  def self.drop_table
+    @mssql.drop_table(@table_name)
+  end
+
+  #----------
+  #
+  def self.create_table
+    @mssql.create_table(@table_name, @table_schema)
+  end
+
+  #----------
+  def self.empty_table
+    @mssql.empty_table(@table_name)
+  end
+
+  #----------
+  def self.read_table
+    @mssql.read_data(@table_name)
+  end
 
   #----------
   #
@@ -51,50 +78,27 @@ module NewLogs
 
     results = gxdb[sql].all
 
-    gxdb.disconnect
-
     results.map do |h| 
       h[:project_server] = conn.project_server
       h[:project_home] = conn.project_home
       h[:project_name] = conn.project_name
     end
+
+    gxdb.disconnect
     results
 
   end
-
-
-
-
-  #----------
-  #
-  def self.drop_table
-    MSSQL.drop_table(@table_name)
-  end
-
-  #----------
-  #
-  def self.create_table
-    MSSQL.create_table(@table_name, @table_schema)
-  end
-
-  #----------
-  #
-  def self.empty_table
-    MSSQL.empty_table(@table_name)
-  end
-
-
 
   #----------
   #
   def self.process_projects
     begin
 
-      MSSQL.empty_table(@table_name)
+      @mssql.empty_table(@table_name)
 
       @opts[:projects].each do |proj|
         logs = get_recent_logs(proj)
-        MSSQL.write_data(@table_name, logs)
+        @mssql.write_data(@table_name, logs)
       end
 
     rescue Exception => e
