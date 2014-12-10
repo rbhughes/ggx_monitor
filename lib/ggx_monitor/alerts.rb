@@ -7,6 +7,8 @@ require "yaml"
 module Alerts
 
   @table_name = "z_ggx_alerts"
+  @proj = nil
+  @gxdb = nil
 
   @table_schema = Proc.new do
     primary_key :id
@@ -50,11 +52,11 @@ module Alerts
   # * sybase table fragmentation 
   # alert if segs_per_row > 1.2
   # http://dcx.sybase.com/1100/en/dbusage_en11/ug-appprofiling-s-5641408.html
-  def self.check_table_fragmentation(gxdb)
+  def self.check_table_fragmentation
     print "."
     fragged_threshold = 1.2
     sql = "call sa_table_fragmentation();"
-    gxdb[sql].all.select{ |t| t[:segs_per_row] > fragged_threshold }.map do |x| 
+    @gxdb[sql].all.select{ |t| t[:segs_per_row] > fragged_threshold }.map do |x| 
       "Sybase Table Fragmentation: #{x[:tablename]}, (run rebuild)"
     end
   end
@@ -66,11 +68,11 @@ module Alerts
   # alert if either gxdb.db or gxdb.log have fragmentation
   # (the multiplier adjusts to a human-readable scale)
   # http://dcx.sybase.com/1200/en/dbadmin/sa95c7b274-c1b8-42d4-bc08-4b66bc1c625a.html
-  def self.check_file_frag_and_log_size(gxdb, proj)
+  def self.check_file_frag_and_log_size
     print "."
     alerts = []
-    db_size = File.size(File.join(proj, "gxdb.db"))
-    log_size = File.size(File.join(proj, "gxdb.log"))
+    db_size = File.size(File.join(@proj, "gxdb.db"))
+    log_size = File.size(File.join(@proj, "gxdb.log"))
 
     fragged_threshold = 1.1
     scary = 400 * 1024**2 # 400MB converted to bytes
@@ -79,7 +81,7 @@ module Alerts
     sql = "select db_property('DBFileFragments') as db_frag, \
       db_property('LogFileFragments') as log_frag"
 
-    gxdb[sql].all.each do |t|
+    @gxdb[sql].all.each do |t|
       db_fragged = (t[:db_frag].to_f/db_size * 200000) > fragged_threshold
       log_fragged = (t[:log_frag].to_f/log_size * 200000) > fragged_threshold
       if (db_fragged || log_fragged)
@@ -92,7 +94,7 @@ module Alerts
   #----------
   # * invalid surface lat/lon
   # alert if lat/lons are not in normal range or are zero (null is okay)
-  def self.check_valid_surface(gxdb)
+  def self.check_valid_surface
     print "."
     sql = "select list(uwi) as invalids from well where uwi in \
       (select top 20 uwi from well where \
@@ -101,7 +103,7 @@ module Alerts
       surface_latitude not between -90 and 90 or \
       surface_latitude = 0 \
       order by uwi)"
-    gxdb[sql].all.select{ |t| t[:invalids].size > 0 }.map do |x|
+    @gxdb[sql].all.select{ |t| t[:invalids].size > 0 }.map do |x|
       "Invalid Surface Lat/Lon: #{x[:invalids]}. ('0' or not lat/lon range)"
     end
   end
@@ -109,7 +111,7 @@ module Alerts
   #----------
   # * invalid bottom hole lat/lon
   # alert if lat/lons are not in normal range or are zero (null is okay)
-  def self.check_valid_bottom(gxdb)
+  def self.check_valid_bottom
     print "."
     sql = "select list(uwi) as invalids from well where uwi in \
       (select top 20 uwi from well where \
@@ -118,16 +120,16 @@ module Alerts
       bottom_hole_latitude not between -90 and 90 or \
       bottom_hole_latitude = 0 \
       order by uwi)"
-    gxdb[sql].all.select{ |t| t[:invalids].size > 0 }.map do |x|
+    @gxdb[sql].all.select{ |t| t[:invalids].size > 0 }.map do |x|
       "Invalid Bottom Hole Lat/Lon: #{x[:invalids]}. ('0' or not lat/lon range)"
     end
   end
 
   #----------
   #
-  def self.collect_alerts(proj)
+  def self.collect_alerts
     alerts = []
-    conn = Sybase.new(proj)
+    conn = Sybase.new(@proj)
     h = {
       project_server: conn.project_server,
       project_home: conn.project_home,
@@ -136,16 +138,16 @@ module Alerts
     print "ggx_alerts --> #{h[:project_server]}/#{h[:project_home]}/"\
     "#{h[:project_name]}"
 
-    gxdb = conn.db
+    @gxdb = conn.db
 
-    #alerts.concat check_table_fragmentation(gxdb) #SKIP, IT'S TOO SLOW
-    alerts.concat check_file_frag_and_log_size(gxdb, proj)
-    alerts.concat check_valid_surface(gxdb)
-    alerts.concat check_valid_bottom(gxdb)
+    #alerts.concat check_table_fragmentation #SKIP, IT'S TOO SLOW
+    alerts.concat check_file_frag_and_log_size
+    alerts.concat check_valid_surface
+    alerts.concat check_valid_bottom
     
     h[:alerts_summary] = alerts.join("\n")
 
-    gxdb.disconnect
+    @gxdb.disconnect
     puts ""
     return h
   end
@@ -162,7 +164,8 @@ module Alerts
 
       @opts[:project_homes].each do |home|
         Discovery.project_list(home, @opts[:deep_scan]).each do |proj|
-          all_projects << collect_alerts(proj)
+          @proj = proj
+          all_projects << collect_alerts
         end
       end
 
@@ -170,8 +173,7 @@ module Alerts
       @mssql.write_data(@table_name, alertable_projects)
 
     rescue Exception => e
-      puts e.message
-      puts e.backtrace
+      raise e
     end
   end
 

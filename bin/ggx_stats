@@ -1,3 +1,67 @@
-puts "stats"
+#!/usr/bin/env ruby
+require "optparse"
+require_relative "../lib/ggx_monitor/stats"
 
+begin
+
+  banner = "\n\nThis utility checks GeoGraphix projects for a variety of "\
+    "problems,\nincluding: bloated gxdb.log files, file fragmentation, and "\
+    "invalid\nsurface and bottom hole lat/lons and stores the results in the\n"\
+    "MS SQL Server GGX_ALERTS table.\n\nUsage: ggx_alerts [options]\n\n"
+
+  options = {}
+  OptionParser.new do |opts|
+    opts.banner = banner
+
+    opts.on("-o", "--opts_path [PATH]", "Specify path to options file") do |o|
+      options[:opts_path] = o
+    end
+
+    opts.on("-d", "--database [ACTION]", [:drop, :create, :empty, :read],
+            "GGX_ALERTS (drop, create, empty, read)") do |d|
+      options[:database] = d
+      #allows the short "-d" to validate too...
+      if options[:database] == nil
+        raise ArgumentError.new("invalid argument: -d #{ARGV[0]}") 
+      end
+    end
+
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+
+  end.parse!
+
+  # define options either locally or from specified file
+  opts_path = options[:opts_path] ? options[:opts_path] : "./options.yml"
+  if File.exists?(opts_path)
+    Stats.set_opts = opts_path
+  else
+    raise ArgumentError.new("invalid options file path: #{opts_path}") 
+  end
+
+
+  if options[:database]
+    case options[:database]
+    when :drop
+      Stats.drop_table
+    when :create
+      Stats.create_table
+    when :empty
+      Stats.empty_table
+    when :read
+      Stats.read_table
+    end
+    exit
+  end
+
+  Stats.process_projects
+
+rescue => e
+  raise e if $DEBUG
+  STDERR.puts e.message
+  STDERR.puts e.backtrace.join("\n")
+  exit 1
+end
 

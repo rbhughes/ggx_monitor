@@ -30,6 +30,12 @@
   - \\OKC1GGX0005\e$\MidCon
   - \\OKC1GGX0006\e$\Oklahoma
 
+:stats:
+  :deep_scan: false
+  :project_homes:
+  - c:\programdata\geographix\projects
+  - \\OKC1GGX0001\e$\East Texas
+
 :temps:
   :deep_scan: false
   :ignored_project_homes:

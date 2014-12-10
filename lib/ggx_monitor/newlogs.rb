@@ -7,6 +7,7 @@ require "yaml"
 module NewLogs
 
   @table_name = "z_ggx_newlogs"
+  @proj = nil
 
   @table_schema = Proc.new do
     primary_key :id
@@ -55,8 +56,8 @@ module NewLogs
   # Query projects for any newly added digital log curves (presumably LAS)
   # that have been added (modified ~ imported) in the past N days.
   #
-  def self.get_recent_logs(proj)
-    conn = Sybase.new(proj)
+  def self.get_recent_logs
+    conn = Sybase.new(@proj)
     gxdb = conn.db
 
     sql = "select \
@@ -100,13 +101,13 @@ module NewLogs
       @opts[:days_ago] = days_ago
 
       @opts[:projects].each do |proj|
-        logs = get_recent_logs(proj)
+        @proj = proj
+        logs = get_recent_logs
         @mssql.write_data(@table_name, logs)
       end
 
     rescue Exception => e
       raise e
-      #puts e.backtrace
     end
   end
 

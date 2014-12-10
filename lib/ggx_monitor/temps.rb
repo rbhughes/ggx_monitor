@@ -59,8 +59,7 @@ module Temps
       end
 
     rescue Exception => e
-      puts e.message
-      puts e.backtrace
+      raise e
     end
   end
 
