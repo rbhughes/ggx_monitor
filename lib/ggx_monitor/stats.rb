@@ -161,7 +161,8 @@ module Stats
       "from wellsurveydir yd) yd"
 
     @gxdb[sql].all.each do |x|
-      puts x[:avg_wells]
+      
+      puts "#{Time.at(x[:avg_wells])}   #{x[:avg_wells]}" unless x[:avg_wells].nil?
     end
     
   end
