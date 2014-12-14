@@ -53,7 +53,6 @@ module Alerts
   # alert if segs_per_row > 1.2
   # http://dcx.sybase.com/1100/en/dbusage_en11/ug-appprofiling-s-5641408.html
   def self.check_table_fragmentation
-    print "."
     fragged_threshold = 1.2
     sql = "call sa_table_fragmentation();"
     @gxdb[sql].all.select{ |t| t[:segs_per_row] > fragged_threshold }.map do |x| 
@@ -69,7 +68,6 @@ module Alerts
   # (the multiplier adjusts to a human-readable scale)
   # http://dcx.sybase.com/1200/en/dbadmin/sa95c7b274-c1b8-42d4-bc08-4b66bc1c625a.html
   def self.check_file_frag_and_log_size
-    print "."
     alerts = []
     db_size = File.size(File.join(@proj, "gxdb.db"))
     log_size = File.size(File.join(@proj, "gxdb.log"))
@@ -95,7 +93,6 @@ module Alerts
   # * invalid surface lat/lon
   # alert if lat/lons are not in normal range or are zero (null is okay)
   def self.check_valid_surface
-    print "."
     sql = "select list(uwi) as invalids from well where uwi in \
       (select top 20 uwi from well where \
       surface_longitude not between -180 and 180 or \
@@ -112,7 +109,6 @@ module Alerts
   # * invalid bottom hole lat/lon
   # alert if lat/lons are not in normal range or are zero (null is okay)
   def self.check_valid_bottom
-    print "."
     sql = "select list(uwi) as invalids from well where uwi in \
       (select top 20 uwi from well where \
       bottom_hole_longitude not between -180 and 180 or \
@@ -128,28 +124,36 @@ module Alerts
   #----------
   #
   def self.collect_alerts
-    alerts = []
-    conn = Sybase.new(@proj)
-    h = {
-      project_server: conn.project_server,
-      project_home: conn.project_home,
-      project_name: conn.project_name
-    }
-    print "ggx_alerts --> #{h[:project_server]}/#{h[:project_home]}/"\
-    "#{h[:project_name]}"
 
-    @gxdb = conn.db
+    project_server = Discovery.parse_host(@proj)
+    project_home = Discovery.parse_home(@proj)
+    project_name = File.basename(@proj)
+
+    print "ggx_alerts --> #{project_server}/#{project_home}/#{project_name}"
+
+    alerts = []
+    @gxdb = Sybase.new(@proj).db
+
+    alert = {
+      project_server: project_server,
+      project_home: project_home,
+      project_name: project_name
+    }
 
     #alerts.concat check_table_fragmentation #SKIP, IT'S TOO SLOW
+    #print "."
     alerts.concat check_file_frag_and_log_size
+    print "."
     alerts.concat check_valid_surface
+    print "."
     alerts.concat check_valid_bottom
+    print "."
     
-    h[:alerts_summary] = alerts.join("\n")
+    alert[:alerts_summary] = alerts.join("\n")
 
     @gxdb.disconnect
-    puts ""
-    return h
+    puts
+    return alert
   end
 
 

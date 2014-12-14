@@ -26,8 +26,8 @@ module Temps
       /^TS_TEMP.*/i
     ]
 
-    conn = Sybase.new(proj)
-    gxdb = conn.db
+    gxdb = Sybase.new(proj).db
+
     dbn = "#{File.basename(proj)}-#{Discovery.parse_home(proj)}".gsub(" ","_")
     sql = "exec sp_tables '%', 'DBA', '#{dbn}', \"'TABLE'\""
 
@@ -39,7 +39,7 @@ module Temps
         print "...and it's DELETED"
       end
 
-      puts ""
+      puts
     end
     gxdb.disconnect
   end

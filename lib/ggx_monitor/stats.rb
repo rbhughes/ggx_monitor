@@ -71,14 +71,10 @@ module Stats
     @mssql.read_data(@table_name)
   end
 
-  #----------
-  #----------
-
 
   #----------
   #
   def self.interpreters
-    print "."
     uf = File.join(@proj, "User Files")
     return unless File.exists?(uf)
     ints = Dir.glob(File.join(uf,"*")).map{ |f| File.basename(f) }.join(", ")
@@ -88,7 +84,6 @@ module Stats
   #----------
   #
   def self.version_and_coordsys
-    print "."
     pxml = File.join(@proj, "Project.ggx.xml")
     return unless File.exists?(pxml)
 
@@ -112,7 +107,6 @@ module Stats
   end
 
   def self.db_stats
-    print "."
     stats = {}
 
     sql = "select WC, WD, DC, DD, RC, RD, FC, FD, ZC, ZD, YC, YD "\
@@ -171,7 +165,6 @@ module Stats
   #----------
   #
   def self.file_stats
-    print "."
     dir = File.join(@proj, "**/*")
 
     map_num, sei_num, file_count, byte_size = 0, 0, 0, 0 
@@ -224,7 +217,6 @@ module Stats
   #----------
   #
   def self.surface_extents
-    print "."
 
     sql = "select "\
       "min(surface_longitude) as min_longitude, "\
@@ -243,23 +235,31 @@ module Stats
 
 
   def self.collect_stats
-    puts "ggx_stats --> #{Discovery.parse_host(proj)}/"\
-      "#{Discovery.parse_home(proj)}/#{File.basename(proj)}"
 
-    conn = Sybase.new(@proj)
-    @gxdb = conn.db
+    project_server = Discovery.parse_host(@proj)
+    project_home = Discovery.parse_home(@proj)
+    project_name = File.basename(@proj)
+
+    print "ggx_stats --> #{project_server}/#{project_home}/#{project_name}"
+
+    @gxdb = Sybase.new(@proj).db
 
     stats = {
-      project_server: conn.project_server,
-      project_home: conn.project_home,
-      project_name: conn.project_name
+      project_server: project_server,
+      project_home: project_home,
+      project_name: project_name
     }
 
     stats.merge! interpreters
+    print "."
     stats.merge! version_and_coordsys
+    print "."
     stats.merge! file_stats
+    print "."
     stats.merge! db_stats
+    print "."
     stats.merge! surface_extents
+    print "."
 
     ages = stats.select{ |k,v| k.to_s.match /^age/ }.values.compact
     stats = stats.reject{ |k,v| k.to_s.match /^age/ }
@@ -267,7 +267,7 @@ module Stats
     stats[:activity_score] = ages.inject(:+)/ages.size
 
     @gxdb.disconnect
-    puts ""
+    puts
     return stats
   end
 

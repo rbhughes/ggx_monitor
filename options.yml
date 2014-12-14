@@ -12,19 +12,7 @@
 :alerts:
   :deep_scan: false
   :project_homes:
-  - \\OKC1GGX0001\e$\Arkansas
-  - \\OKC1GGX0001\e$\Delaware Basin
   - \\OKC1GGX0001\e$\East Texas
-  - \\OKC1GGX0001\e$\GeoEdges
-  - \\OKC1GGX0001\e$\New Ventures
-  - \\OKC1GGX0001\e$\Rockies
-  - \\OKC1GGX0002\e$\Nebraska
-  - \\OKC1GGX0002\e$\Northeastern_US
-  - \\OKC1GGX0002\e$\Oklahoma
-  - \\OKC1GGX0003\e$\Permian Basin
-  - \\OKC1GGX0004\e$\Delaware Basin
-  - \\OKC1GGX0005\e$\MidCon
-  - \\OKC1GGX0006\e$\Oklahoma
   :just_a_list_to_copy_from:
   - c:\programdata\geographix\projects
   - \\OKC1GGX0001\e$\Arkansas

@@ -1,6 +1,7 @@
 require "sequel"
 require "tiny_tds"
 require "yaml"
+require "awesome_print"
 
 class MSSQL
 
@@ -26,8 +27,7 @@ class MSSQL
   end
 
   def empty_table(table_name)
-    puts "delete all rows from: #{table_name}..."
-    puts @db[table_name.to_sym].delete
+    puts "deleted #{@db[table_name.to_sym].delete} row(s) from #{table_name}."
   end
 
   def write_data(table_name, data)
@@ -38,7 +38,7 @@ class MSSQL
 
   def read_data(table_name)
     puts "listing contents for #{table_name}..."
-    puts @db[table_name.to_sym].all
+    ap @db[table_name.to_sym].all
   end
 
 end

@@ -56,12 +56,15 @@ module NewLogs
   # Query projects for any newly added digital log curves (presumably LAS)
   # that have been added (modified ~ imported) in the past N days.
   #
-  def self.get_recent_logs
-    conn = Sybase.new(@proj)
-    gxdb = conn.db
+  def self.collect_newlogs
 
-    puts "ggx_newlogs --> #{conn.project_server}/#{conn.project_home}/"\
-    "#{conn.project_name}"
+    project_server = Discovery.parse_host(@proj)
+    project_home = Discovery.parse_home(@proj)
+    project_name = File.basename(@proj)
+
+    print "ggx_newlogs --> #{project_server}/#{project_home}/#{project_name}"
+
+    gxdb = Sybase.new(@proj).db
 
     sql = "select \
       c.wellid as well_id, \
@@ -85,14 +88,14 @@ module NewLogs
     results = gxdb[sql].all
 
     results.map do |h| 
-      h[:project_server] = conn.project_server
-      h[:project_home] = conn.project_home
-      h[:project_name] = conn.project_name
+      h[:project_server] = project_server
+      h[:project_home] = project_home
+      h[:project_name] = project_name
     end
 
     gxdb.disconnect
+    puts
     results
-
   end
 
   #----------
@@ -105,7 +108,7 @@ module NewLogs
 
       @opts[:projects].each do |proj|
         @proj = proj
-        logs = get_recent_logs
+        logs = collect_newlogs
         @mssql.write_data(@table_name, logs)
       end
 
