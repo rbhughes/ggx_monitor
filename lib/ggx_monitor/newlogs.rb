@@ -6,7 +6,7 @@ require "yaml"
 
 module NewLogs
 
-  @table_name = "z_ggx_newlogs"
+  @table_name = "ggx_newlogs"
   @proj = nil
 
   @table_schema = Proc.new do
@@ -59,6 +59,9 @@ module NewLogs
   def self.get_recent_logs
     conn = Sybase.new(@proj)
     gxdb = conn.db
+
+    puts "ggx_newlogs --> #{conn.project_server}/#{conn.project_home}/"\
+    "#{conn.project_name}"
 
     sql = "select \
       c.wellid as well_id, \

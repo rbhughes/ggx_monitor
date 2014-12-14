@@ -1,12 +1,13 @@
 require_relative "discovery"
 require_relative "mssql"
 require_relative "sybase"
+require "filesize"
 require "nokogiri"
 require "date"
 require "yaml"
 
 module Stats
-  @table_name = "z_ggx_stats"
+  @table_name = "ggx_stats"
   @proj = nil
   @gxdb = nil
 
@@ -16,20 +17,17 @@ module Stats
     String :project_home
     String :project_name, :null => false
     Fixnum :activity_score
-    String :full_path
     Bignum :file_count
     Bignum :byte_size
     String :human_size
     DateTime :oldest_file_mod
     DateTime :newest_file_mod
-    Fixnum :avg_file_mod
-    String :surface_bounds
     String :interpreters, :text => true
     String :schema_version
     String :unit_system
-    String :db_coordsys
-    String :map_coordsys
-    String :esri_coordsys
+    String :db_coordsys, :text => true
+    String :map_coordsys, :text => true
+    String :esri_coordsys, :text => true
     Bignum :num_wells
     Bignum :num_digital_curves
     Bignum :num_raster_curves
@@ -38,14 +36,10 @@ module Stats
     Bignum :num_layers_maps
     Bignum :num_dir_surveys
     Bignum :num_sv_interps
-    Fixnum :avg_wells
-    Fixnum :avg_digital_curves
-    Fixnum :avg_raster_curves
-    Fixnum :avg_formations
-    Fixnum :avg_zone_attr
-    Fixnum :avg_layers_maps
-    Fixnum :avg_dir_surveys
-    Fixnum :avg_sv_interps
+    Float :min_longitude
+    Float :max_longitude
+    Float :min_latitude
+    Float :max_latitude
     DateTime :row_created_date, :default => Sequel.function(:getdate)
   end
 
@@ -84,6 +78,7 @@ module Stats
   #----------
   #
   def self.interpreters
+    print "."
     uf = File.join(@proj, "User Files")
     return unless File.exists?(uf)
     ints = Dir.glob(File.join(uf,"*")).map{ |f| File.basename(f) }.join(", ")
@@ -93,6 +88,7 @@ module Stats
   #----------
   #
   def self.version_and_coordsys
+    print "."
     pxml = File.join(@proj, "Project.ggx.xml")
     return unless File.exists?(pxml)
 
@@ -115,55 +111,58 @@ module Stats
     }
   end
 
-    #Bignum :num_wells
-    #Bignum :num_digital_curves
-    #Bignum :num_raster_curves
-    #Bignum :num_formations
-    #Bignum :num_zone_attr
-    #Bignum :num_layers_maps
-    #Bignum :num_dir_surveys
-    #Bignum :num_sv_interps
-    #Fixnum :avg_wells
-    #Fixnum :avg_digital_curves
-    #Fixnum :avg_raster_curves
-    #Fixnum :avg_formations
-    #Fixnum :avg_zone_attr
-    #Fixnum :avg_layers_maps
-    #Fixnum :avg_dir_surveys
-    #Fixnum :avg_sv_interps
-
   def self.db_stats
-    sql = "select "\
-      "num_wells, avg_wells, "\
-      "num_digital_curves, avg_digital_curves, "\
-      "num_raster_curves, avg_raster_curves, "\
-      "num_formations, avg_formations, "\
-      "num_zone_attr, avg_zone_attr, "\
-      "num_dir_surveys, avg_dir_surveys "\
-      "from (select count(*) as num_wells from well) wc "\
-      "cross join (select avg(row_changed_date) as avg_wells from well) wd "\
-      "cross join (select count(*) as num_digital_curves from gx_well_curve) dc "\
-      "cross join (select max(date_modified) as avg_digital_curves from gx_well_curve) dd "\
-      "cross join (select count(*) as num_raster_curves from log_image_reg_log_section) rc "\
-      "cross join (select max(update_date) as avg_raster_curves "\
-      "from log_image_reg_log_section) rd "\
-      "cross join (select count(distinct(source+formation)) as num_formations "\
-      "from formations) fc "\
-      "cross join (select max(f.[Row Changed Date]) as avg_formations "\
-      "from formations f) fd "\
-      "cross join (select count(distinct zc.[Attribute Name]) as num_zone_attr "\
-      "from wellzoneintrvvaluewithdepthsouterjoin zc) zc "\
-      "cross join (select max(zd.[Data Date]) as avg_zone_attr "\
-      "from wellzoneintrvvaluewithdepthsouterjoin zd) zd "\
-      "cross join (select count(distinct yc.[Survey ID]) as num_dir_surveys "\
-      "from wellsurveys yc) yc "\
-      "cross join (select max(yd.[Row Changed Date]) as avg_dir_surveys "\
-      "from wellsurveydir yd) yd"
+    print "."
+    stats = {}
+
+    sql = "select WC, WD, DC, DD, RC, RD, FC, FD, ZC, ZD, YC, YD "\
+      "from (select count(*) as WC from well) wc "\
+      "cross join "\
+      "(select cast(avg(getdate()-row_changed_date) as integer) "\
+      "as WD from well) wd "\
+      "cross join "\
+      "(select count(*) as DC from gx_well_curve) dc "\
+      "cross join "\
+      "(select cast(avg(getdate()-date_modified) as integer) "\
+      "as DD from gx_well_curve) dd "\
+      "cross join "\
+      "(select count(*) as RC from log_image_reg_log_section) rc "\
+      "cross join "\
+      "(select cast(avg(getdate()-update_date) as integer) "\
+      "as RD from log_image_reg_log_section) rd "\
+      "cross join "\
+      "(select count(distinct(source+formation)) as FC from formations) fc "\
+      "cross join "\
+      "(select cast(avg(getdate()-f.[Row Changed Date]) "\
+      "as integer) as FD from formations f) fd "\
+      "cross join "\
+      "(select count(distinct z.[Attribute Name]) "\
+      "as ZC from wellzoneintrvvaluewithdepthsouterjoin z) zc "\
+      "cross join "\
+      "(select cast(avg(getdate()-z.[Data Date]) as integer) "\
+      "as ZD from wellzoneintrvvaluewithdepthsouterjoin z) zd "\
+      "cross join "\
+      "(select count(distinct y.[Survey ID]) as YC from wellsurveys y) yc "\
+      "cross join "\
+      "(select cast(avg(getdate()-y.[Row Changed Date]) as integer) "\
+      "as YD from wellsurveydir y) yd"
 
     @gxdb[sql].all.each do |x|
-      
-      puts "#{Time.at(x[:avg_wells])}   #{x[:avg_wells]}" unless x[:avg_wells].nil?
+      stats[:num_wells] =          x[:wc]
+      stats[:age_wells] =          x[:wd]
+      stats[:num_digital_curves] = x[:dc]
+      stats[:age_digital_curves] = x[:dd]
+      stats[:num_raster_curves] =  x[:rc]
+      stats[:age_raster_curves] =  x[:rd]
+      stats[:num_formations] =     x[:fc]
+      stats[:age_formations] =     x[:fd]
+      stats[:num_zone_attr] =      x[:zc]
+      stats[:age_zone_attr] =      x[:zd]
+      stats[:num_dir_surveys] =    x[:yc]
+      stats[:age_dir_surveys] =    x[:yd]
     end
+
+    stats
     
   end
 
@@ -172,6 +171,7 @@ module Stats
   #----------
   #
   def self.file_stats
+    print "."
     dir = File.join(@proj, "**/*")
 
     map_num, sei_num, file_count, byte_size = 0, 0, 0, 0 
@@ -202,44 +202,73 @@ module Stats
 
     end
 
-    avg_layers_maps = (map_ago.inject(:+).to_f / map_ago.size).round rescue nil
-    avg_sv_interps = (sei_ago.inject(:+).to_f / sei_ago.size).round rescue nil
-    avg_file_mod = (file_ago.inject(:+).to_f / file_ago.size).round rescue nil
+    age_layers_maps = (map_ago.inject(:+).to_f / map_ago.size).round rescue nil
+    age_sv_interps = (sei_ago.inject(:+).to_f / sei_ago.size).round rescue nil
+    age_file_mod = (file_ago.inject(:+).to_f / file_ago.size).round rescue nil
 
     {
-      map_num: map_num,
-      sei_num: sei_num,
+      num_layers_maps: map_num,
+      num_sv_interps: sei_num,
       oldest_file_mod: oldest_file_mod,
       newest_file_mod: newest_file_mod,
       byte_size: byte_size,
+      human_size: Filesize.from("#{byte_size} B").pretty.gsub('i',''),
       file_count: file_count,
-      avg_layers_maps: avg_layers_maps,
-      avg_sv_interps: avg_sv_interps,
-      avg_file_mod: avg_file_mod
+      age_layers_maps: age_layers_maps,
+      age_sv_interps: age_sv_interps,
+      age_file_mod: age_file_mod
     }
 
   end
 
+  #----------
+  #
+  def self.surface_extents
+    print "."
+
+    sql = "select "\
+      "min(surface_longitude) as min_longitude, "\
+      "min(surface_latitude) as min_latitude, "\
+      "max(surface_longitude) as max_longitude, "\
+      "max(surface_latitude) as max_latitude "\
+      "from well where "\
+      "surface_longitude between -180 and 180 and "\
+      "surface_latitude between -90 and 90 and "\
+      "surface_longitude is not null and "\
+      "surface_latitude is not null"
+
+    @gxdb[sql].all[0]
+    
+  end
+
 
   def self.collect_stats
+    puts "ggx_stats --> #{Discovery.parse_host(proj)}/"\
+      "#{Discovery.parse_home(proj)}/#{File.basename(proj)}"
+
     conn = Sybase.new(@proj)
     @gxdb = conn.db
 
-    h = {
+    stats = {
       project_server: conn.project_server,
       project_home: conn.project_home,
       project_name: conn.project_name
     }
 
-    #interpreters
-    #version_and_coordsys
-    #file_stats
-    db_stats
+    stats.merge! interpreters
+    stats.merge! version_and_coordsys
+    stats.merge! file_stats
+    stats.merge! db_stats
+    stats.merge! surface_extents
 
+    ages = stats.select{ |k,v| k.to_s.match /^age/ }.values.compact
+    stats = stats.reject{ |k,v| k.to_s.match /^age/ }
+
+    stats[:activity_score] = ages.inject(:+)/ages.size
 
     @gxdb.disconnect
-
-
+    puts ""
+    return stats
   end
 
 
@@ -255,12 +284,11 @@ module Stats
       @opts[:project_homes].each do |home|
         Discovery.project_list(home, @opts[:deep_scan]).each do |proj|
           @proj = proj
-          collect_stats
+          all_projects << collect_stats
         end
       end
 
-      #alertable_projects = all_projects.reject{ |x| x[:alerts_summary].empty? }
-      #@mssql.write_data(@table_name, alertable_projects)
+      @mssql.write_data(@table_name, all_projects)
 
     rescue Exception => e
       raise e

@@ -6,7 +6,7 @@ require "yaml"
 
 module Alerts
 
-  @table_name = "z_ggx_alerts"
+  @table_name = "ggx_alerts"
   @proj = nil
   @gxdb = nil
 
