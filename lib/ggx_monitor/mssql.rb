@@ -1,16 +1,14 @@
 require "sequel"
 require "tiny_tds"
-require "yaml"
 require "awesome_print"
 
 class MSSQL
 
-  def initialize(opts_path)
-    opts = YAML.load_file(opts_path)[:sql_server]
+  def initialize(options)
     @db = Sequel.connect(
       adapter: "tinytds",
-      host: opts[:host],
-      database: opts[:database]
+      host: options[:sql_host],
+      database: options[:sql_db]
     )
   end
 

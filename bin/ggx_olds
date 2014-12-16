@@ -1,0 +1,77 @@
+#!/usr/bin/env ruby
+require "optparse"
+require_relative "../lib/ggx_monitor/olds"
+
+begin
+
+  banner = "\n\nThis utility collects age stats from a specified number of "\
+    "months ago from\nAOIs, Layers, the User Files folder and miscellaneous "\
+    "in GeoGraphix projects\nlisted in the options.yml file and writes the "\
+    "results to screen or CSV file.\n\nUsage: ggx_newlogs [options]\n\n"
+
+  options = {
+    months_ago: 6,
+    get_aois: true,
+    get_layers: false,
+    get_logs: false,
+    get_userfiles: false,
+    csv_out: false
+  }
+
+
+  OptionParser.new do |opts|
+    opts.banner = banner
+
+    opts.on("-o", "--opts_path [PATH]", "Specify path to options file") do |x|
+      options[:opts_path] = x
+    end
+
+    opts.on("-m", "--months_ago", "Number of days ago to query") do |x|
+      options[:days_ago] = x
+    end
+
+    opts.on("-a", "--get_aois", "Collect stats from AOIs") do |x|
+      options[:get_aois] = x
+    end
+
+    opts.on("-l", "--get_layers", "Collect stats from Layers") do |x|
+      options[:get_layers] = x
+    end
+
+    opts.on("-g", "--get_logs", "Collect stats from various log files") do |x|
+      options[:get_logs] = x
+    end
+
+    opts.on("-u", "--get_userfiles", "Collect stats from User Files") do |x|
+      options[:get_logs] = x
+    end
+
+    opts.on("-c", "--csv_out", "Output to CSV files (one per type)") do |x|
+      options[:csv_out] = x
+    end
+
+
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+
+  end.parse!
+
+  # merge optparser input with options from file (valid options.yml required)
+  yml_path = options[:opts_path] ? options[:opts_path] : "./options.yml"
+  if File.exists?(yml_path)
+    Olds.set_opts = YAML.load_file(yml_path)[:olds].merge(options)
+  else
+    raise ArgumentError.new("invalid options file path: #{opts_path}") 
+  end
+
+  Olds.process_projects
+
+rescue => e
+  raise e if $DEBUG
+  STDERR.puts e.message
+  STDERR.puts e.backtrace.join("\n")
+  exit 1
+end
+

@@ -1,13 +1,12 @@
 require_relative "sybase"
 require_relative "discovery"
 require "date"
-require "yaml"
 
 module Temps
 
   # kinda like mattr_accessor, but define @mssql too
-  def self.set_opts=(opts_path)
-    @opts = YAML.load_file(opts_path)[:temps]
+  def self.set_opts=(options)
+    @opts = options
   end
 
   #----------

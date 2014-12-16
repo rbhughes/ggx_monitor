@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "optparse"
+require "yaml"
 require_relative "../lib/ggx_monitor/temps"
 
 begin
@@ -16,6 +17,10 @@ begin
   OptionParser.new do |opts|
     opts.banner = banner
 
+    opts.on("-o", "--opts_path [PATH]", "Specify path to options file") do |o|
+      options[:opts_path] = o
+    end
+
     opts.on("-k", "--kill_temps", "Drop leftover temp tables") do |k|
       options[:kill_temps] = k
     end
@@ -27,10 +32,10 @@ begin
 
   end.parse!
 
-  # define options either locally or from specified file
-  opts_path = options[:opts_path] ? options[:opts_path] : "./options.yml"
-  if File.exists?(opts_path)
-    Temps.set_opts = opts_path
+  # merge optparser input with options from file (valid options.yml required)
+  yml_path = options[:opts_path] ? options[:opts_path] : "./options.yml"
+  if File.exists?(yml_path)
+    Temps.set_opts = YAML.load_file(yml_path)[:temps].merge(options)
   else
     raise ArgumentError.new("invalid options file path: #{opts_path}") 
   end

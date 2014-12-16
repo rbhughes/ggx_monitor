@@ -1,55 +1,17 @@
 require_relative "discovery"
-require_relative "mssql"
 require_relative "sybase"
 require "date"
 
-module NewLogs
+module Olds
 
-  @table_name = "ggx_newlogs"
   @proj = nil
-
-  @table_schema = Proc.new do
-    primary_key :id
-    String :project_server
-    String :project_home
-    String :project_name, :null => false
-    String :well_id, :null => false
-    String :well_name
-    String :operator
-    String :state
-    String :county
-    String :curves
-    DateTime :date_modified
-    DateTime :row_created_date, :default => Sequel.function(:getdate)
-  end
 
   # kinda like mattr_accessor, but define @mssql too
   def self.set_opts=(options)
     @opts = options
-    @mssql = MSSQL.new(options)
   end
 
-  #----------
-  #
-  def self.drop_table
-    @mssql.drop_table(@table_name)
-  end
 
-  #----------
-  #
-  def self.create_table
-    @mssql.create_table(@table_name, @table_schema)
-  end
-
-  #----------
-  def self.empty_table
-    @mssql.empty_table(@table_name)
-  end
-
-  #----------
-  def self.read_table
-    @mssql.read_data(@table_name)
-  end
 
   #----------
   # Query projects for any newly added digital log curves (presumably LAS)
@@ -102,13 +64,17 @@ module NewLogs
   def self.process_projects
     begin
 
-      @mssql.empty_table(@table_name)
 
-      @opts[:projects].each do |proj|
-        @proj = proj
-        logs = collect_newlogs
-        @mssql.write_data(@table_name, logs)
+      @opts[:project_homes].each do |home|
+        Discovery.project_list(home, @opts[:deep_scan]).each do |proj|
+          @proj = proj
+          puts @proj
+
+        end
       end
+
+      #@opts[:days_ago] = days_ago
+
 
     rescue Exception => e
       raise e
@@ -117,4 +83,5 @@ module NewLogs
 
   
 end
+
 

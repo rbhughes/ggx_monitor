@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "optparse"
+require "yaml"
 require_relative "../lib/ggx_monitor/stats"
 
 begin
@@ -33,10 +34,11 @@ begin
 
   end.parse!
 
-  # define options either locally or from specified file
-  opts_path = options[:opts_path] ? options[:opts_path] : "./options.yml"
-  if File.exists?(opts_path)
-    Stats.set_opts = opts_path
+  # merge optparser input with options from file (valid options.yml required)
+  yml_path = options[:opts_path] ? options[:opts_path] : "./options.yml"
+  if File.exists?(yml_path)
+    yml = YAML.load_file(yml_path)
+    Stats.set_opts = yml[:stats].merge(options).merge(yml[:sql_server])
   else
     raise ArgumentError.new("invalid options file path: #{opts_path}") 
   end

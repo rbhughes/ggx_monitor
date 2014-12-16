@@ -4,7 +4,6 @@ require_relative "sybase"
 require "filesize"
 require "nokogiri"
 require "date"
-require "yaml"
 
 module Stats
   @table_name = "ggx_stats"
@@ -44,9 +43,9 @@ module Stats
   end
 
   # kinda like mattr_accessor, but define @mssql too
-  def self.set_opts=(opts_path)
-    @opts = YAML.load_file(opts_path)[:stats]
-    @mssql = MSSQL.new(opts_path)
+  def self.set_opts=(options)
+    @opts = options
+    @mssql = MSSQL.new(options)
   end
 
   #----------

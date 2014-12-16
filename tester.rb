@@ -1,5 +1,14 @@
 require 'yaml'
 
-x = YAML.load_file('./settings.yml')
 
-puts x[:alerts][:project_homes][0]
+opts = {
+  thing_a: true,
+  thing_b: false
+}
+
+opts_path = "c:/dev/ggx_monitor/options.yml"
+
+x = YAML.load_file(opts_path)
+x = x[:olds].merge opts
+puts x
+#puts x[:olds][:project_homes]
