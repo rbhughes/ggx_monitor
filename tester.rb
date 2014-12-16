@@ -1,3 +1,4 @@
+=begin
 require 'yaml'
 
 
@@ -12,3 +13,11 @@ x = YAML.load_file(opts_path)
 x = x[:olds].merge opts
 puts x
 #puts x[:olds][:project_homes]
+#
+=end
+proj = "c:/programdata/geographix/projects"
+dir = File.join(proj, "**/{prjlayers.fld,folder.aoi}")
+
+Dir.glob(dir).each do |f| 
+  puts f
+end

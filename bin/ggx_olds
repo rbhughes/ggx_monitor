@@ -1,21 +1,23 @@
 #!/usr/bin/env ruby
 require "optparse"
+require "yaml"
 require_relative "../lib/ggx_monitor/olds"
 
 begin
 
-  banner = "\n\nThis utility collects age stats from a specified number of "\
-    "months ago from\nAOIs, Layers, the User Files folder and miscellaneous "\
-    "in GeoGraphix projects\nlisted in the options.yml file and writes the "\
-    "results to screen or CSV file.\n\nUsage: ggx_newlogs [options]\n\n"
+  banner = "\n\nThis utility collects files age/modified and other metadata "\
+  "from\na specified number of months ago from these specified types:\n\n"\
+    "          -t aoi   => check all areas of interest (default)\n"\
+    "          -t layer => check all layers in all AOIs\n"\
+    "          -t user  => scan User Files folder contents\n"\
+    "          -t log   => scan for all activity/import logs\n\n"
+    "from in GeoGraphix projects\nlisted in the options.yml. Results are "\
+    "optionally written to CSV file.\n\nUsage: ggx_newlogs [options]\n\n"
 
   options = {
     months_ago: 6,
-    get_aois: true,
-    get_layers: false,
-    get_logs: false,
-    get_userfiles: false,
-    csv_out: false
+    csv_out: false,
+    type: nil
   }
 
 
@@ -30,26 +32,20 @@ begin
       options[:days_ago] = x
     end
 
-    opts.on("-a", "--get_aois", "Collect stats from AOIs") do |x|
-      options[:get_aois] = x
-    end
+    opts.on("-t", "--type [TYPE]", [:aoi, :layer, :log, :user],
+            "TYPES: aoi, layer, log, user") do |x|
+      options[:type] = x
 
-    opts.on("-l", "--get_layers", "Collect stats from Layers") do |x|
-      options[:get_layers] = x
-    end
-
-    opts.on("-g", "--get_logs", "Collect stats from various log files") do |x|
-      options[:get_logs] = x
-    end
-
-    opts.on("-u", "--get_userfiles", "Collect stats from User Files") do |x|
-      options[:get_logs] = x
+      #allows the short "-t" to validate too...
+      if options[:type].nil?
+        puts "!!! Invalid or blank type supplied. Defaulting to: aoi"
+        options[:type] = :aoi
+      end
     end
 
     opts.on("-c", "--csv_out", "Output to CSV files (one per type)") do |x|
       options[:csv_out] = x
     end
-
 
     opts.on_tail("-h", "--help", "Show this message") do
       puts opts

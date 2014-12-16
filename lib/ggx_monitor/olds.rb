@@ -14,49 +14,71 @@ module Olds
 
 
   #----------
-  # Query projects for any newly added digital log curves (presumably LAS)
-  # that have been added (modified ~ imported) in the past N days.
   #
-  def self.collect_newlogs
+  def self.collect_filestats
 
     project_server = Discovery.parse_host(@proj)
     project_home = Discovery.parse_home(@proj)
     project_name = File.basename(@proj)
 
-    print "ggx_newlogs --> #{project_server}/#{project_home}/#{project_name}"
+    print "ggx_olds --> #{project_server}/#{project_home}/#{project_name}"
+    
+    puts #REMOVE ME
 
-    gxdb = Sybase.new(@proj).db
+    dir = File.join(@proj, "**/*")
+      
+    regex = /.*/
 
-    sql = "select \
-      c.wellid as well_id, \
-      w.well_name, \
-      w.operator, \
-      w.province_state as state, \
-      w.county, \
-      list(c.curvename) as curves, \
-      c.date_modified \ 
-      from gx_well_curve c \
-      join well w on c.wellid = w.uwi \
-      where c.date_modified > getdate()-#{@opts[:days_ago]} \
-      group by \
-      c.wellid, \
-      c.date_modified, \
-      w.well_name, \
-      w.operator, \
-      w.province_state, \
-      w.county"
-
-    results = gxdb[sql].all
-
-    results.map do |h| 
-      h[:project_server] = project_server
-      h[:project_home] = project_home
-      h[:project_name] = project_name
+    case @opts[:type]
+    when :aoi
+      dir = File.join(@proj, "**/{prjlayers.fld,folder.aoi}")
+    when :layer
+      dir = File.join(@proj, "**/{layer.gly}")
+    when :log
+      regex = Regexp.union [
+        /database rebuild log\.txt$/i,
+        /formationcalc\.txt$/i,
+        /glacurveloadlog\.txt$/i,
+        /^TS_TEMP.*/i
+      ]
+    when :user
+      dir = File.join(@proj, "User Files", "**/*")
+    else
     end
 
-    gxdb.disconnect
+    #dir = File.join(@proj, "**/*")
+
+    #oldest_file_mod = Time.now
+    #newest_file_mod = Time.at(0)
+
+    puts "----"
+    puts dir
+    puts "----"
+
+    #Dir.glob(dir, File::FNM_DOTMATCH).each do |f| 
+    Dir.glob(dir).each do |f| 
+      stat = File.stat(f)
+      days_ago = ((Time.now.to_i - stat.mtime.to_i) / 86400).to_i
+
+      puts f
+
+
+      #byte_size += stat.size
+      #file_count += 1 if File.file?(f)
+      #oldest_file_mod = stat.mtime if stat.mtime < oldest_file_mod
+      #newest_file_mod = stat.mtime if stat.mtime > newest_file_mod
+
+      #file_ago << days_ago unless f.match /gxdb.*\.(db|log)$/i
+
+      #if f.match /\.(gmp|shp)$/i
+      #  map_num += 1
+      #  map_ago << days_ago
+      #end
+
+    end
+
+
     puts
-    results
   end
 
   #----------
@@ -68,7 +90,7 @@ module Olds
       @opts[:project_homes].each do |home|
         Discovery.project_list(home, @opts[:deep_scan]).each do |proj|
           @proj = proj
-          puts @proj
+          collect_filestats
 
         end
       end
