@@ -6,17 +6,20 @@ require_relative "../lib/ggx_monitor/olds"
 begin
 
   banner = "\n\nThis utility collects files age/modified and other metadata "\
-  "from\na specified number of months ago from these specified types:\n\n"\
+  "from these\ndata/metadata components:\n\n"\
     "          -t aoi   => check all areas of interest (default)\n"\
     "          -t layer => check all layers in all AOIs\n"\
     "          -t user  => scan User Files folder contents\n"\
-    "          -t log   => scan for all activity/import logs\n\n"
-    "from in GeoGraphix projects\nlisted in the options.yml. Results are "\
-    "optionally written to CSV file.\n\nUsage: ggx_newlogs [options]\n\n"
+    "          -t log   => scan for all activity/import logs\n\n"\
+    "...from GeoGraphix project homes listed in the options.yml file. Results "\
+    "are\noptionally written to CSV file. Use the skip_days flag to ignore a "\
+    "number of\ndays from the present and return only older data. For example:"\
+    " '-s 90' will\nonly return data older than about three months.\n\nUsage: "\
+    "ggx_newlogs [options]\n\n"
 
   options = {
-    months_ago: 6,
-    csv_out: false,
+    skip_days: 100,
+    csv_out: nil,
     type: nil
   }
 
@@ -28,8 +31,8 @@ begin
       options[:opts_path] = x
     end
 
-    opts.on("-m", "--months_ago", "Number of days ago to query") do |x|
-      options[:days_ago] = x
+    opts.on("-s", "--skip_days [INT]", "Days from present to exclude") do |x|
+      options[:skip_days] = x.to_i
     end
 
     opts.on("-t", "--type [TYPE]", [:aoi, :layer, :log, :user],
@@ -43,8 +46,9 @@ begin
       end
     end
 
-    opts.on("-c", "--csv_out", "Output to CSV files (one per type)") do |x|
-      options[:csv_out] = x
+    opts.on("-c", "--csv_out [PATH]", "Output to CSV (timestamped file)") do |x|
+      default = "#{options[:type].to_s}_#{Time.now.to_f}.csv"
+      options[:csv_out] = x ||= default
     end
 
     opts.on_tail("-h", "--help", "Show this message") do
@@ -53,6 +57,9 @@ begin
     end
 
   end.parse!
+
+  # set default local csv path
+  #csv_path = "#{options[:type].to_s}_#{Time.now.to_f}.csv"
 
   # merge optparser input with options from file (valid options.yml required)
   yml_path = options[:opts_path] ? options[:opts_path] : "./options.yml"
