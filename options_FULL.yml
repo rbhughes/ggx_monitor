@@ -1,7 +1,7 @@
 ---
 :sql_server:
-  :host: OKC1SQL1008
-  :database: Geoscience
+  :sql_host: OKC1SQL1008
+  :sql_db: Geoscience
 
 :newlogs:
   :projects:

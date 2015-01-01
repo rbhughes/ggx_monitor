@@ -42,6 +42,7 @@ module Stats
     DateTime :row_created_date, :default => Sequel.function(:getdate)
   end
 
+  #----------
   # kinda like mattr_accessor, but define @mssql too
   def self.set_opts=(options)
     @opts = options
@@ -105,6 +106,8 @@ module Stats
     }
   end
 
+  #----------
+  #
   def self.db_stats
     stats = {}
 
@@ -173,6 +176,7 @@ module Stats
     newest_file_mod = Time.at(0)
 
     Dir.glob(dir, File::FNM_DOTMATCH).each do |f| 
+      next unless File.exists?(f)
       stat = File.stat(f)
       days_ago = ((Time.now.to_i - stat.mtime.to_i) / 86400).to_i
       byte_size += stat.size

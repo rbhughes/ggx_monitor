@@ -121,6 +121,18 @@ module Alerts
   end
 
   #----------
+  # Failed rebuilds leave these files behind and block subsequent rebuilds
+  def self.check_rebuild_leftovers
+    [
+      File.join(@proj, "gxdb.dbR"),
+      File.join(@proj, "gxdb_production.dbR"),
+      File.join(@proj, "gxdb.logR")
+    ].map do |f|
+      "Leftover from rebuild: #{f}" if File.exists?(f)
+    end.compact
+  end
+
+  #----------
   #
   def self.collect_alerts
 
@@ -141,13 +153,16 @@ module Alerts
 
     #alerts.concat check_table_fragmentation #SKIP, IT'S TOO SLOW
     #print "."
+
     alerts.concat check_file_frag_and_log_size
     print "."
     alerts.concat check_valid_surface
     print "."
     alerts.concat check_valid_bottom
     print "."
-    
+    alerts.concat check_rebuild_leftovers
+    print "."
+
     alert[:alerts_summary] = alerts.join("\n")
 
     @gxdb.disconnect

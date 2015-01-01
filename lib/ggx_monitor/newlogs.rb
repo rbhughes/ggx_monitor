@@ -54,7 +54,6 @@ module NewLogs
   #----------
   # Query projects for any newly added digital log curves (presumably LAS)
   # that have been added (modified ~ imported) in the past N days.
-  #
   def self.collect_newlogs
 
     project_server = Discovery.parse_host(@proj)

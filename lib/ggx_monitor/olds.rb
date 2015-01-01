@@ -62,6 +62,7 @@ module Olds
     end
 
     Dir.glob(dir).each do |f| 
+      next unless File.exists?(f)
 
       if @opts[:type] == :log
         element = file_mod_stats(f) if f.match regex
@@ -125,8 +126,9 @@ module Olds
     byte_size = 0
     dir = File.join(dir_path, "**/*")
 
-    ages = Dir.glob(dir).map do |x|
-      stat = File.stat(x)
+    ages = Dir.glob(dir).map do |f|
+      next unless File.exists?(f)
+      stat = File.stat(f)
       byte_size += stat.size
       ((Time.now.to_i - stat.mtime.to_i) / 86400).to_i
     end
@@ -208,5 +210,3 @@ module Olds
 
   
 end
-
-
