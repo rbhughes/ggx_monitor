@@ -1,6 +1,7 @@
 require_relative "discovery"
 require_relative "sybase"
 require "awesome_print"
+require "digest/md5"
 require "filesize"
 require "nokogiri"
 require "date"
@@ -118,6 +119,53 @@ module Olds
     creator
   end
 
+  #----------
+  # Calculate checksum from single or multiple files. Collect only bytes less 
+  # than the cs_max limit to keep things fast (do not use on huge directories;
+  # this is intended for use on GGX layers and the like).
+  # NOT PRACTICAL, but keep this around in case...
+=begin
+  def self.composite_checksum(path)
+    return unless File.exists?(path)
+    cs_max = 1024**2 * 2 #size in MiB
+    s = ""
+
+    if File.file?(path)
+      limit = (File.size(path) > cs_max) ? cs_max : File.size(path)
+      File.open(path, "r") do |f|
+        s << f.read(limit)
+      end
+    elsif File.directory?(path)
+      Dir.glob(File.join(path,"**/*")).each do |p|
+        next unless File.exists?(p) && File.file?(p)
+        limit = (File.size(p) > cs_max) ? cs_max : File.size(p)
+        File.open(path, "r") do |f|
+          s << f.read(limit) #if File.file?(p)
+        end
+      end
+    end
+
+    Digest::MD5.hexdigest(s)
+  end
+=end
+
+  #----------
+  # We want to identify duplicate GGX layers, so check each of the shapefile
+  # components separately (and ignore .xml and .prj) to get data only
+  def self.layer_checksum(layer)
+    cs_max = 1024**2 * 2 #size in MiB
+    s = ""
+    matches = "{shp,shp.xml,dbf,shx,sbn,sbx}"
+    Dir.glob(File.join(layer, "**/*.#{matches}")).each do |f|
+      next unless File.exists?(f)
+      limit = (File.size(f) > cs_max) ? cs_max : File.size(f)
+      File.open(f, "r") do |x| 
+        s << x.read(limit) if File.file?(x)
+      end
+    end
+    Digest::MD5.hexdigest(s)
+  end
+
 
   #----------
   # Recurse contents of an AOI or layer and get file age stats
@@ -137,7 +185,7 @@ module Olds
     print "."
     creator = creator_from_xml(dir_path)
 
-    {
+    stats = {
       project_server: @project_server,
       project_home: @project_home,
       project_name: @project_name,
@@ -149,6 +197,9 @@ module Olds
       max_mod: ages.max,
       avg_mod: ((ages.inject(:+).to_f / ages.size).round rescue nil)
     }
+
+    stats[:checksum] = layer_checksum(dir_path) if @opts[:type] == :layer
+    return stats
   end
 
 
