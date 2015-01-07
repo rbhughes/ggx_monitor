@@ -119,39 +119,11 @@ module Olds
     creator
   end
 
-  #----------
-  # Calculate checksum from single or multiple files. Collect only bytes less 
-  # than the cs_max limit to keep things fast (do not use on huge directories;
-  # this is intended for use on GGX layers and the like).
-  # NOT PRACTICAL, but keep this around in case...
-=begin
-  def self.composite_checksum(path)
-    return unless File.exists?(path)
-    cs_max = 1024**2 * 2 #size in MiB
-    s = ""
-
-    if File.file?(path)
-      limit = (File.size(path) > cs_max) ? cs_max : File.size(path)
-      File.open(path, "r") do |f|
-        s << f.read(limit)
-      end
-    elsif File.directory?(path)
-      Dir.glob(File.join(path,"**/*")).each do |p|
-        next unless File.exists?(p) && File.file?(p)
-        limit = (File.size(p) > cs_max) ? cs_max : File.size(p)
-        File.open(path, "r") do |f|
-          s << f.read(limit) #if File.file?(p)
-        end
-      end
-    end
-
-    Digest::MD5.hexdigest(s)
-  end
-=end
 
   #----------
-  # We want to identify duplicate GGX layers, so check each of the shapefile
-  # components separately (and ignore .xml and .prj) to get data only
+  # We want to identify duplicate GGX layers, so get a composite checksum of
+  # shapefile components. Ignore layer.gly.xml/.prj since they can be affected
+  # by file name and path.
   def self.layer_checksum(layer)
     cs_max = 1024**2 * 2 #size in MiB
     s = ""
