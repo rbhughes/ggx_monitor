@@ -153,7 +153,7 @@ module Olds
       ((Time.now.to_i - stat.mtime.to_i) / 86400).to_i
     end
 
-    return if ages.min < @opts[:skip_days]
+    return if (ages.min.nil? || ages.min < @opts[:skip_days])
     print "."
     creator = creator_from_xml(dir_path)
 

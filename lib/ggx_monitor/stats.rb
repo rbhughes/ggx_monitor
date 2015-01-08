@@ -76,7 +76,7 @@ module Stats
   #
   def self.interpreters
     uf = File.join(@proj, "User Files")
-    return unless File.exists?(uf)
+    return { interpeters: nil } unless File.exists?(uf)
     ints = Dir.glob(File.join(uf,"*")).map{ |f| File.basename(f) }.join(", ")
     { interpreters: ints }
   end

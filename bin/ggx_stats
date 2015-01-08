@@ -5,10 +5,10 @@ require_relative "../lib/ggx_monitor/stats"
 
 begin
 
-  banner = "\n\nThis utility checks GeoGraphix projects for a variety of "\
-    "problems,\nincluding: bloated gxdb.log files, file fragmentation, and "\
-    "invalid\nsurface and bottom hole lat/lons and stores the results in the\n"\
-    "MS SQL Server GGX_ALERTS table.\n\nUsage: ggx_alerts [options]\n\n"
+  banner = "\n\nThis utility collects lots of metadata stats from GeoGraphix "\
+    "projects, including: data counts, coordinate systems, interpreters and "\
+    "an activity score that reflects project use (active or stale)."\
+    "MS SQL Server GGX_STATS table.\n\nUsage: ggx_stats [options]\n\n"
 
   options = {}
   OptionParser.new do |opts|
@@ -19,7 +19,7 @@ begin
     end
 
     opts.on("-d", "--database [ACTION]", [:drop, :create, :empty, :read],
-            "GGX_ALERTS (drop, create, empty, read)") do |d|
+            "GGX_STATS (drop, create, empty, read)") do |d|
       options[:database] = d
       #allows the short "-d" to validate too...
       if options[:database] == nil
