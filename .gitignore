@@ -12,4 +12,4 @@
 *.o
 *.a
 mkmf.log
-options*.yml
+options.yml
