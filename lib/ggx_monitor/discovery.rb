@@ -14,8 +14,8 @@ module Discovery
 
   #----------
   # Build a connect string for Sybase that mimics Discovery
-  # UID=dba;PWD=sql;DBF='\\OKC1GGX0006\e$\Oklahoma\NW Oklahoma/gxdb.db';
-  # DBN=NW_Oklahoma-Oklahoma;HOST=OKC1GGX0006;Server=GGX_OKC1GGX0006
+  # UID=dba;PWD=sql;DBF='\\DEN1GGX06\e$\Alabama\Deep Water/gxdb.db';
+  # DBN=Deep_Water-Alabama;HOST=DEN1GGX06;Server=GGX_DEN1GGX06
   def self.connect_string(proj)
     host =  parse_host(proj)
     dbn = "#{File.basename(proj)}-#{parse_home(proj)}".gsub(" ","_")
