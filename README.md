@@ -1,8 +1,9 @@
 ggx_monitor
 ---------
 
-Various LMKR GeoGraphix Discovery administration utilities
 ![lmkr_ggx](/lmkr_ggx.png?raw=true "lmkr_ggx")
+
+#### Various LMKR GeoGraphix Discovery administration utilities all-in-one.
 
 LMKR's [GeoGraphix Discovery] Suite is a premier interpretation software package used by geoscientists and engineers in the E&P industry. At the heart of every Discovery project is a SAP (formerly Sybase) [SQLAnywhere] database. Even a modest environment may have dozens of projects containing millions of well and production records, and they are typically distributed across several project servers.
 
